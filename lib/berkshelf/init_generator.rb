@@ -59,6 +59,7 @@ module Berkshelf
     end
 
     def generate
+      validate_cookbook
       validate_configuration
       check_option_support
 
@@ -126,6 +127,19 @@ module Berkshelf
           metadata.name.empty? ? File.basename(target) : metadata.name
         rescue CookbookNotFound, IOError
           File.basename(target)
+        end
+      end
+
+      # Assert the current working directory is a cookbook
+      #
+      # @raise [NotACookbook] if the current working directory is
+      #   not a cookbook
+      #
+      # @return [nil]
+      def validate_cookbook
+        path = File.expand_path(File.join(target, 'metadata.rb'))
+        unless File.exists?(path)
+          raise Berkshelf::NotACookbook.new(path)
         end
       end
 

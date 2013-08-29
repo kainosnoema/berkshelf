@@ -7,6 +7,10 @@ describe Berkshelf::InitGenerator do
 
   before do
     Kitchen::Generator::Init.stub(:new).with(any_args()).and_return(kitchen_generator)
+    FileUtils.mkdir_p(target)
+    File.open(File.join(target, 'metadata.rb'), 'w') do |f|
+      f.write("name 'some_cookbook'")
+    end
   end
 
   context 'with default options' do
@@ -49,13 +53,17 @@ describe Berkshelf::InitGenerator do
     end
   end
 
+  context 'with no metadata' do
+    before do
+      FileUtils.rm(File.join(target, 'metadata.rb'))
+      expect {
+        Berkshelf::InitGenerator.new([target]).invoke_all
+        }.to raise_error(Berkshelf::NotACookbook)
+    end
+  end
+
   context 'with a metadata entry in the Berksfile' do
     before(:each) do
-      Dir.mkdir target
-      File.open(target.join('metadata.rb'), 'w+') do |f|
-        f.write ''
-      end
-
       capture(:stdout) {
         Berkshelf::InitGenerator.new([target], metadata_entry: true).invoke_all
       }
